@@ -56,7 +56,15 @@ int main(){
 				mx_idx = j;
 			}
 		}
-		printf("%d\n",mx_idx);
+		double mx2 = 0;
+		double mx_idx2 = -1;
+		for(int j=0;j<Y_p[i].size();j++){
+			if(Y_p[i][j]>mx2){
+				mx2 = Y_p[i][j];
+				mx_idx2 = j;
+			}
+		}
+		printf("%d %d\n",mx_idx, mx_idx2);
 		if(fabs(Y_val[i][mx_idx]-1)<0.000001){
 			cnt += 1;
 		}
