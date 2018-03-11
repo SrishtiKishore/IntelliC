@@ -22,8 +22,7 @@ int main(){
 	X_train = dt.sliceColumn(X_train,1,785);
 
 	vector <int> v;
-	v.push_back(10);
-	v.push_back(10);
+	v.push_back(25);
 	NeuralNetwork model(X_train, Y_train, v, 100);
 	model.trainByGradientDescent(0.01, false);
 	vector <vector <double> > Y_p = model.predict(X_train);

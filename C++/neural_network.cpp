@@ -62,7 +62,7 @@ private:
 			return -(double)rand()/(double)RAND_MAX;
 	}
 	vector <vector<double> > hypothesis(){
-		return Matrix::sigmoid(neurons[output_layer]);
+		return neurons[output_layer];
 	}
 	double cost(){
 		vector <vector<double> > h = hypothesis();
@@ -80,7 +80,7 @@ private:
 	}
 	void forwardPropagate(){
 		for(int i=1;i<=output_layer;i++){
-			neurons[i] = Matrix::multiply(neurons[i-1], Matrix::transpose(theta[i-1]));
+			neurons[i] = Matrix::sigmoid(Matrix::multiply(neurons[i-1], Matrix::transpose(theta[i-1])));
 			if(i!=output_layer)
 				_d.prependColumn(neurons[i],Vector::ones(m));
 		}
@@ -165,11 +165,11 @@ public:
 		vector <vector<double> > v;
 		neurons.push_back(X);
 		for(int i=1;i<=hidden_layer_count;i++){
-			v = Matrix::multiply(neurons[i-1], Matrix::transpose(theta[i-1]));
+			v = Matrix::sigmoid(Matrix::multiply(neurons[i-1], Matrix::transpose(theta[i-1])));
 			_d.prependColumn(v,Vector::ones(m));
 			neurons.push_back(v);
 		}
-		v = Matrix::multiply(neurons[output_layer-1], Matrix::transpose(theta[output_layer-1]));
+		v = Matrix::sigmoid(Matrix::multiply(neurons[output_layer-1], Matrix::transpose(theta[output_layer-1])));
 		neurons.push_back(v);
 	}
 	double trainByGradientDescent(double alpha, bool printCost = false){
@@ -212,16 +212,15 @@ public:
 			}
 
 			curr_cost = cost();
-			if(curr_cost-prev_cost>0 || fabs(curr_cost-prev_cost)<0.00001){
-				if(curr_cost-prev_cost > 0.00001){
+			if(curr_cost-prev_cost>0 || fabs(curr_cost-prev_cost)<0.001){
+				if(curr_cost-prev_cost > 0.001){
 					printf("A overshoot was observed during learning. Try to decrease the learning rate or increase the layers.\n");
 				}
 				break;
 			}	
-			printf("Cost: %lf %lf\n",curr_cost, prev_cost-curr_cost);
-			prev_cost = curr_cost;
 			if(printCost)
-				printf("Cost: %lf\n",curr_cost);
+				printf("Cost: %lf Difference: %lf\n",curr_cost,curr_cost-prev_cost);
+			prev_cost = curr_cost;
 		}
 		return prev_cost;
 	}
@@ -240,10 +239,10 @@ public:
 		_d.prependColumn(X_p,Vector::ones(X_p.size()));
 		//Forward propagate X_p
 		for(int i=1;i<=hidden_layer_count;i++){
-			X_p = Matrix::multiply(X_p, Matrix::transpose(theta[i-1]));
+			X_p = Matrix::sigmoid(Matrix::multiply(X_p, Matrix::transpose(theta[i-1])));
 			_d.prependColumn(X_p,Vector::ones(m));
 		}
-		X_p = Matrix::multiply(X_p, Matrix::transpose(theta[output_layer-1]));
+		X_p = Matrix::sigmoid(Matrix::multiply(X_p, Matrix::transpose(theta[output_layer-1])));
 		return X_p;
 	}
 };
