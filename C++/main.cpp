@@ -26,5 +26,12 @@ int main(){
 	v.push_back(10);
 	NeuralNetwork model(X_train, Y_train, v, 100);
 	model.trainByGradientDescent(0.01, false);
+	vector <vector <double> > Y_p = model.predict(X_train);
+	for(int i=0;i<Y_p.size();i++){
+		for(int j=0;j<Y_p[i].size();j++){
+			printf("%lf ",Y_p[i][j]);
+		}
+		printf("\n");
+	}
 	return 0;
 }

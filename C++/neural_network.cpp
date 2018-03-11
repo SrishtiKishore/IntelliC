@@ -212,8 +212,8 @@ public:
 			}
 
 			curr_cost = cost();
-			if(curr_cost-prev_cost>0 || fabs(curr_cost-prev_cost)<0.000001){
-				if(curr_cost-prev_cost > 0.000001){
+			if(curr_cost-prev_cost>0 || fabs(curr_cost-prev_cost)<0.00001){
+				if(curr_cost-prev_cost > 0.00001){
 					printf("A overshoot was observed during learning. Try to decrease the learning rate or increase the layers.\n");
 				}
 				break;
@@ -226,7 +226,7 @@ public:
 		return prev_cost;
 	}
 
-	/*vector <pair<double, double> > predict(vector <vector<double> > X_p){ //Pass a copy since we will modify it.
+	vector <vector<double> > predict(vector <vector<double> > X_p){ //Pass a copy since we will modify it.
 		// The matrix is automatically verified by rest of the functions.
 		if(isNormalized){
 			// Renormalize using the same mean and standard deviation.
@@ -238,18 +238,12 @@ public:
 			}
 		}
 		_d.prependColumn(X_p,Vector::ones(X_p.size()));
-		vector <double> v = Vector::sigmoid(Matrix::multiply(X_p,theta));
-		vector <pair<double, double> > res(v.size()); 
-		for(int i=0;i<v.size();i++){
-			if(v[i]>=0.5){
-				res[i].first = 1; 
-				res[i].second = v[i]; //The confidence
-			}
-			else{
-				res[i].first = 0;
-				res[i].second = 1-v[i];
-			}
+		//Forward propagate X_p
+		for(int i=1;i<=hidden_layer_count;i++){
+			X_p = Matrix::multiply(X_p, Matrix::transpose(theta[i-1]));
+			_d.prependColumn(X_p,Vector::ones(m));
 		}
-		return res;
-	}*/
+		X_p = Matrix::multiply(X_p, Matrix::transpose(theta[output_layer-1]));
+		return X_p;
+	}
 };
