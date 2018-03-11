@@ -172,7 +172,7 @@ public:
 		v = Matrix::sigmoid(Matrix::multiply(neurons[output_layer-1], Matrix::transpose(theta[output_layer-1])));
 		neurons.push_back(v);
 	}
-	double trainByGradientDescent(double alpha, bool printCost = false){
+	double trainByGradientDescent(double alpha,  bool gradientCheck, bool printCost = false){
 		if(!isNormalized){
 			printf("Gradient Descent without Normalization may take a long time to complete. Try to normalize the features for faster descent.\n");
 		}
@@ -180,13 +180,14 @@ public:
 		for(int i=0;i<theta.size();i++){
 			for(int j=0;j<theta[i].size();j++){
 				for(int k=0;k<theta[i][j].size();k++){
-					theta[i][j][k] = randDouble()/1000;
+					theta[i][j][k] = randDouble()/100000;
 				}
 			}
 		}
 
 		double prev_cost = cost(), curr_cost;
 		while(true){
+
 			forwardPropagate();
 
 			vector <vector<vector<double> > > Delta  = theta;
@@ -203,10 +204,27 @@ public:
 			for(int i=0;i<Delta.size();i++){
 				for(int j=0;j<Delta[i].size();j++){
 					for(int k=0;k<Delta[i][j].size();k++){
+						if(gradientCheck){
+							double orig = theta[i][j][k];
+							theta[i][j][k] += 0.0001;
+							forwardPropagate();
+							double c1 = cost();
+							theta[i][j][k] -= 0.0002;
+							forwardPropagate();
+							double c2 = cost();
+							if(k==0)
+								printf("Gradient Checking - %lf %lf\n",(c1-c2)/0.0002,(1.0/m)*Delta[i][j][k]);
+							else
+								printf("Gradient Checking - %lf %lf\n",(c1-c2)/0.0002,(1.0/m)*(Delta[i][j][k] + lambda*orig));
+							//Restore
+							theta[i][j][k] += 0.0001;
+							forwardPropagate();
+						}
 						if(k==0)
 							theta[i][j][k] = theta[i][j][k] - (alpha/m)*Delta[i][j][k];
 						else
-							theta[i][j][k] = theta[i][j][k] - (alpha/m)*(Delta[i][j][k] + 1.0*theta[i][j][k]);
+							theta[i][j][k] = theta[i][j][k] - (alpha/m)*(Delta[i][j][k] + lambda*theta[i][j][k]);
+							
 					}
 				}
 			}
