@@ -15,13 +15,13 @@ int main(){
 	vector <vector <double> > X_val;
 	vector <vector <double> > Y_val;
 	vector <int> rand = Vector::random_permutation(data.size());
-	for(int i=0;i<4500;i++){
+	for(int i=0;i<450;i++){
 		X_train.push_back(data[rand[i]-1]);
 		vector <double> row (10, 0);
 		row[(int)data[rand[i]-1][0]] = 1;
 		Y_train.push_back(row);
 	}
-	for(int i=4500;i<5000;i++){
+	for(int i=450;i<500;i++){
 		X_val.push_back(data[rand[i]-1]);
 		vector <double> row (10, 0);
 		row[(int)data[rand[i]-1][0]] = 1;
@@ -51,11 +51,13 @@ int main(){
 		double mx = 0;
 		double mx_idx = -1;
 		for(int j=0;j<Y_p[i].size();j++){
+			printf("%lf ",Y_p[i][j]);
 			if(Y_p[i][j]>mx){
 				mx = Y_p[i][j];
 				mx_idx = j;
 			}
 		}
+		printf("\n");
 		double mx2 = 0;
 		double mx_idx2 = -1;
 		for(int j=0;j<Y_val[i].size();j++){
