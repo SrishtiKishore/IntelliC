@@ -212,8 +212,8 @@ public:
 			}
 
 			curr_cost = cost();
-			if(curr_cost-prev_cost>0 || fabs(curr_cost-prev_cost)<0.001){
-				if(curr_cost-prev_cost > 0.001){
+			if(curr_cost-prev_cost>0 || fabs(curr_cost-prev_cost)<0.1){
+				if(curr_cost-prev_cost > 0.1){
 					printf("A overshoot was observed during learning. Try to decrease the learning rate or increase the layers.\n");
 				}
 				break;
@@ -239,8 +239,14 @@ public:
 		_d.prependColumn(X_p,Vector::ones(X_p.size()));
 		//Forward propagate X_p
 		for(int i=1;i<=hidden_layer_count;i++){
-			X_p = Matrix::sigmoid(Matrix::multiply(X_p, Matrix::transpose(theta[i-1])));
-			_d.prependColumn(X_p,Vector::ones(m));
+			try{
+				X_p = Matrix::sigmoid(Matrix::multiply(X_p, Matrix::transpose(theta[i-1])));
+			}catch(const char *s){
+				printf("here - %d %d %d %d %d\n",i,X_p.size(),X_p[0].size(),theta[i-1].size(),theta[i-1][0].size());
+				exit(0);
+				
+			}
+		_d.prependColumn(X_p,Vector::ones(X_p.size()));
 		}
 		X_p = Matrix::sigmoid(Matrix::multiply(X_p, Matrix::transpose(theta[output_layer-1])));
 		return X_p;

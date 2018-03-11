@@ -26,14 +26,15 @@ int main(){
 		row[(int)data[i][0]] = 1;
 		Y_val.push_back(row);
 	}
-	printf("fvssv");
 
 	DataTransform <double> dt;
 	X_train = dt.sliceColumn(X_train,1,785);
+	X_val = dt.sliceColumn(X_val,1,785);
 	vector <int> v;
 	v.push_back(25);
 	NeuralNetwork model(X_train, Y_train, v, 100);
-	model.trainByGradientDescent(0.01, true);
+	model.trainByGradientDescent(0.1, true);
+	try{
 	vector <vector <double> > Y_p = model.predict(X_val);
 	double cnt = 0; 
 	for(int i=0;i<Y_p.size();i++){
@@ -50,5 +51,10 @@ int main(){
 		}
 	}
 	printf("Accuracy - %lf\n",cnt/Y_val.size());
-	return 0;
+}
+catch(const char *s){
+	printf("%s\n",s);
+	
+}
+return 0;
 }
