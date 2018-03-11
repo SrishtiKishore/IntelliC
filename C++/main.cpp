@@ -22,13 +22,9 @@ int main(){
 	X_train = dt.sliceColumn(X_train,1,785);
 
 	vector <int> v;
-	v.push_back(25);
-	NeuralNetwork model(X_train, Y_train, v);
-	try{
-		model.trainByGradientDescent(0.01, true);
-	}
-	catch(const char *s){
-		printf("%s\n",s);
-	}
+	v.push_back(10);
+	v.push_back(10);
+	NeuralNetwork model(X_train, Y_train, v, 100);
+	model.trainByGradientDescent(0.01, false);
 	return 0;
 }
