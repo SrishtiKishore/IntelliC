@@ -219,7 +219,7 @@ public:
 				break;
 			}	
 			if(printCost)
-				printf("Cost: %lf Difference: %lf\n",curr_cost,curr_cost-prev_cost);
+				printf("Cost: %lf Difference: %lf\n",curr_cost,prev_cost-curr_cost);
 			prev_cost = curr_cost;
 		}
 		return prev_cost;
