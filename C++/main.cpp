@@ -24,7 +24,7 @@ int main(){
 	vector <int> v;
 	v.push_back(25);
 	NeuralNetwork model(X_train, Y_train, v, 100);
-	model.trainByGradientDescent(0.01, false);
+	model.trainByGradientDescent(0.01, true);
 	vector <vector <double> > Y_p = model.predict(X_train);
 	for(int i=0;i<Y_p.size();i++){
 		for(int j=0;j<Y_p[i].size();j++){
