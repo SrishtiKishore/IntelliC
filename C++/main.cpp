@@ -33,8 +33,7 @@ int main(){
 	vector <int> v;
 	v.push_back(25);
 	NeuralNetwork model(X_train, Y_train, v, 100);
-	model.trainByGradientDescent(0.1, true);
-	try{
+	model.trainByGradientDescent(0.01, true);
 	vector <vector <double> > Y_p = model.predict(X_val);
 	double cnt = 0; 
 	for(int i=0;i<Y_p.size();i++){
@@ -51,10 +50,5 @@ int main(){
 		}
 	}
 	printf("Accuracy - %lf\n",cnt/Y_val.size());
-}
-catch(const char *s){
-	printf("%s\n",s);
-	
-}
 return 0;
 }
