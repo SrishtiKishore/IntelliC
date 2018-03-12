@@ -53,7 +53,7 @@ private:
 	bool isNormalized;
 	DataTransform <double> _d;
 	double sigmoid(double z){
-		return 1/(1+exp(-z));
+		return 1.0/(1+exp(-z));
 	}
 	static double randDouble(bool positiveOnly = false){
 		if(rand()%2==0 || positiveOnly)
@@ -89,7 +89,7 @@ private:
 		vector <vector <double> > h = hypothesis();
 		for(int i=0;i<m;i++){
 			vector <vector <double> > del;
-			del.push_back(Vector::diff(h[i],Y[i]));
+			del.push_back(Vector::prod(Vector::diff(h[i],Y[i]),Vector::prod(h[i],Vector::diff(Vector::ones(h[i].size()),h[i]))));
 			int last_del = 0;
 			for(int j=output_layer-1;j>=1;j--){
 				vector <double> v = Vector::prod(Matrix::multiply(Matrix::transpose(theta[j]),del[last_del]),Vector::prod(neurons[j][i],Vector::diff(Vector::ones(neurons[j][i].size()),neurons[j][i])));
@@ -180,7 +180,7 @@ public:
 		for(int i=0;i<theta.size();i++){
 			for(int j=0;j<theta[i].size();j++){
 				for(int k=0;k<theta[i][j].size();k++){
-					theta[i][j][k] = randDouble()/100000;
+					theta[i][j][k] = randDouble()/10000;
 				}
 			}
 		}
@@ -230,8 +230,8 @@ public:
 			}
 
 			curr_cost = cost();
-			if(curr_cost-prev_cost>0 || fabs(curr_cost-prev_cost)<0.001){
-				if(curr_cost-prev_cost > 0.001){
+			if(curr_cost-prev_cost>0 || fabs(curr_cost-prev_cost)<0.000001){
+				if(curr_cost-prev_cost > 0.000001){
 					printf("A overshoot was observed during learning. Try to decrease the learning rate or increase the layers.\n");
 				}
 				break;
@@ -255,6 +255,14 @@ public:
 			}
 		}
 		_d.prependColumn(X_p,Vector::ones(X_p.size()));
+		for(int i=0;i<theta.size();i++){
+			printf("Layer %d\n",i);
+			for(int j=0;j<theta[i].size();j++){
+				for(int k=0;k<theta[i][j].size();k++){
+					printf("%d %d %lf\n",k,j,theta[i][j][k]);
+				}
+			}
+		}
 		//Forward propagate X_p
 		for(int i=1;i<=hidden_layer_count;i++){
 			X_p = Matrix::sigmoid(Matrix::multiply(X_p, Matrix::transpose(theta[i-1])));

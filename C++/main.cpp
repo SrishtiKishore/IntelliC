@@ -6,6 +6,7 @@
 #include "matrix.cpp"
 using namespace std;
 int main(){
+	try{
 	CSVHandler c("train_handwriting.csv");
 	vector <vector <double> > data;
 	vector <string> label;
@@ -27,37 +28,34 @@ int main(){
 		row[(int)data[rand[i]-1][0]] = 1;
 		Y_val.push_back(row);
 	}
-
 	DataTransform <double> dt;
 	X_train = dt.sliceColumn(X_train,1,785);
 	X_val = dt.sliceColumn(X_val,1,785);
+	/*DataAnalyzer <double> d(X_train);
+	d.printData();
+	DataAnalyzer <double> d2(Y_train);
+	d2.printData();
+	DataAnalyzer <double> d3(X_val);
+	d3.preview();
+	DataAnalyzer <double> d4(Y_val);
+	d4.preview();*/
 	vector <int> v;
 	v.push_back(25);
-	NeuralNetwork model(X_train, Y_train, v, 1);
-	for(int i=0;i<X_train.size();i++){
-		for(int j=0;j<X_train[i].size();j++){
-			X_train[i][j] /= 255.0;
-		}
-	}
-	for(int i=0;i<X_val.size();i++){
-		for(int j=0;j<X_val[i].size();j++){
-			X_val[i][j] /= 255.0;
-		}
-	}
-	model.trainByGradientDescent(0.01, false, true);
+	NeuralNetwork model(X_train, Y_train, v, 100, false);
+
+	model.trainByGradientDescent(0.01, true, true);
+
 	vector <vector <double> > Y_p = model.predict(X_val);
 	double cnt = 0; 
 	for(int i=0;i<Y_p.size();i++){
 		double mx = 0;
 		double mx_idx = -1;
 		for(int j=0;j<Y_p[i].size();j++){
-			printf("%lf ",Y_p[i][j]);
 			if(Y_p[i][j]>mx){
 				mx = Y_p[i][j];
 				mx_idx = j;
 			}
 		}
-		printf("\n");
 		double mx2 = 0;
 		double mx_idx2 = -1;
 		for(int j=0;j<Y_val[i].size();j++){
@@ -72,5 +70,9 @@ int main(){
 		}
 	}
 	printf("Accuracy - %lf\n",cnt/Y_val.size());
+	}
+catch(const char *s){
+	printf("%s\n",s);
+}
 	return 0;
 }
