@@ -1,12 +1,11 @@
-#include "csv_handler.cpp"
-#include "data_analyzer.cpp"
-#include "data_transform.cpp"
-#include "neural_network.cpp"
-#include "vector.cpp"
-#include "matrix.cpp"
+#include "CSVHandler.cpp"
+#include "DataAnalyzer.cpp"
+#include "DataTransform.cpp"
+#include "NeuralNetwork.cpp"
+#include "Vector.cpp"
+#include "Matrix.cpp"
 using namespace std;
 int main(){
-	try{
 	CSVHandler c("train_handwriting.csv");
 	vector <vector <double> > data;
 	vector <string> label;
@@ -41,12 +40,13 @@ int main(){
 	d4.preview();*/
 	vector <int> v;
 	v.push_back(25);
-	NeuralNetwork model(X_train, Y_train, v, 100, false);
+	NeuralNetwork model(X_train, Y_train, 25);
 
-	model.trainByGradientDescent(0.01, true, true);
+	model.trainByGradientDescent(0.1, 1000, true);
 
 	vector <vector <double> > Y_p = model.predict(X_val);
 	double cnt = 0; 
+	//printf("here\n");
 	for(int i=0;i<Y_p.size();i++){
 		double mx = 0;
 		double mx_idx = -1;
@@ -70,9 +70,5 @@ int main(){
 		}
 	}
 	printf("Accuracy - %lf\n",cnt/Y_val.size());
-	}
-catch(const char *s){
-	printf("%s\n",s);
-}
 	return 0;
 }
