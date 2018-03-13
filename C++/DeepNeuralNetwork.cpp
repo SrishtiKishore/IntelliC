@@ -31,8 +31,8 @@ private:
 	vector <vector <double> > X_t;
 	vector <vector <double> > Y;
 	vector <vector <vector <double> > > theta;
+	vector <vector <double> > theta_bias;
 	vector <vector <vector <double> > > neurons; //Triple dimension: This is because there are 'm' neural network each having same theta.
-
 	/*
 		0th layer is the Matrix A itself. 
 		Total number of layers = hidden layer count + 2
@@ -49,7 +49,6 @@ private:
 	int layer_count;
 	int input_layer;
 	int output_layer;
-	double lambda;
 	bool isNormalized;
 	DataTransform <double> _d;
 	double sigmoid(double z){
@@ -61,53 +60,41 @@ private:
 		else
 			return -(double)rand()/(double)RAND_MAX;
 	}
-	vector <vector<double> > hypothesis(){
-		return neurons[output_layer];
-	}
 	double cost(){
-		vector <vector<double> > h = hypothesis();
-		vector <double> v1 = Matrix::sum(Matrix::prod(Y, Matrix::log(h)));
-		vector <double> v2 = Matrix::sum(Matrix::prod(Matrix::diff(Matrix::ones(Y.size(), Y[0].size()) , Y),Matrix::log(Matrix::diff(Matrix::ones(h.size(), h[0].size()) , h))));
-		double reg = 0;
-		for(int i=0;i<theta.size();i++){
-			for(int j=0;j<theta[i].size();j++){
-				for(int k=1;k<theta[i][j].size();k++){
-					reg += theta[i][j][k]*theta[i][j][k];
-				}
-			}
-		}
-		return (-1.0/m)*Vector::sum(Vector::sum(v1,v2)) + (lambda/(2*m))*reg;
+		vector <double> v1 = Matrix::sum(Matrix::prod(Y, Matrix::log(neurons[output_layer])));
+		vector <double> v2 = Matrix::sum(Matrix::prod(Matrix::diff(Matrix::ones(Y.size(), Y[0].size()) , Y),Matrix::log(Matrix::diff(Matrix::ones(m, output_layer_size) , neurons[output_layer]))));
+		return (-1.0/m)*Vector::sum(Vector::sum(v1,v2));
 	}
 	void forwardPropagate(){
-		for(int i=1;i<=output_layer;i++){
-			neurons[i] = Matrix::sigmoid(Matrix::multiply(neurons[i-1], Matrix::transpose(theta[i-1])));
-			if(i!=output_layer)
-				_d.prependColumn(neurons[i],Vector::ones(m));
+		for(int l=1;l<=output_layer;l++){
+			neurons[l] = Matrix::multiply(neurons[l-1], theta[l-1]);
+			for(int i=0;i<neurons[l][0].size();i++){
+				for(int j=0;j<m;j++){
+					neurons[l][j][i] += theta_bias[l-1][i];
+				}
+			}
+			neurons[l] = Matrix::sigmoid(neurons[l]);
 		}
 	}
-	void backPropagate(vector <vector <vector <double> > > &Delta){
-		vector <vector <double> > h = hypothesis();
-		for(int i=0;i<m;i++){
-			vector <vector <double> > del;
-			del.push_back(Vector::prod(Vector::diff(h[i],Y[i]),Vector::prod(h[i],Vector::diff(Vector::ones(h[i].size()),h[i]))));
-			int last_del = 0;
-			for(int j=output_layer-1;j>=1;j--){
-				vector <double> v = Vector::prod(Matrix::multiply(Matrix::transpose(theta[j]),del[last_del]),Vector::prod(neurons[j][i],Vector::diff(Vector::ones(neurons[j][i].size()),neurons[j][i])));
-				reverse(v.begin(),v.end());
-				v.pop_back();
-				reverse(v.begin(),v.end());
-				del.push_back(v);
-				last_del++;
-			}
-			reverse(del.begin(),del.end());
-			for(int j=0;j<output_layer;j++){
-				Delta[j] = Matrix::sum(Delta[j], Matrix::multiply(Vector::upgrade(del[j]),Matrix::transpose(Vector::upgrade(neurons[j][i]))));
-			}
+	void backPropagate(double alpha){
+		vector <vector <vector <double> > > d; vector <vector<double> > d_output, d_hidden;
+		d_output = Matrix::prod(Matrix::diff(Y,neurons[output_layer]),Matrix::prod(neurons[output_layer],Matrix::diff(Matrix::ones(m,output_layer_size),neurons[output_layer])));
+		d.push_back(d_output);
+		int last_d = 0;
+		for(int j=output_layer-1;j>=1;j--){
+			d_hidden = Matrix::prod(Matrix::multiply(d[last_d], Matrix::transpose(theta[j])),Matrix::prod(neurons[j],Matrix::diff(Matrix::ones(m, neurons[j][0].size()),neurons[j])));
+			d.push_back(d_hidden);
+			last_d++;
 		}
-
+		last_d = 0;
+		for(int j=output_layer-1;j>=0;j--){
+			theta[j] = Matrix::sum(theta[j], Matrix::prod(Matrix::multiply(Matrix::transpose(neurons[j]),d[last_d]), alpha));
+			theta_bias[j] = Vector::sum(theta_bias[j], Vector::prod(Matrix::sum(d[last_d]), alpha));
+			last_d++;
+		}
 	}
 public:
-	DeepNeuralNetwork(const vector <vector <double> > &data, const vector <vector<double> > &label, const vector <int> &hidden_units, double l, bool normalize = false){
+	DeepNeuralNetwork(const vector <vector <double> > &data, const vector <vector<double> > &label, const vector <int> &hidden_units, bool normalize = false){
 		if(data.size()==0) throw "Data must not be empty";
 		if(data.size()!=label.size())	throw "Number of X and y must match\n";
 		if(!Matrix::isMatrix(data))	throw "X must be a matrix (i.e double dimensional vector)\n";
@@ -115,64 +102,54 @@ public:
 
 		m = data.size();
 		n = data[0].size();
-		input_layer_size = n+1;
+		input_layer_size = n;
 		output_layer_size = label[0].size();
 		hidden_layer_count = hidden_units.size();
 		layer_count = hidden_layer_count + 2;
 		input_layer = 0;
 		output_layer = layer_count-1;
-		lambda = l;
 
 		for(int i=0;i<m;i++){
-			int cnt = 0;
 			for(int j=0;j<output_layer_size;j++){
 				if(fabs(label[i][j]-1)>0.000001 && fabs(label[i][j])>0.000001){
 					throw "Y must be either 0 or 1.\n";
 				}
-
-				if(fabs(label[i][j]-1)<=0.000001){
-					cnt++;
-				}
-			}
-			if(cnt!=1){
-				throw "Each X must have exactly one label.\n";
 			}
 		}
 		if(normalize){
 			avg = Matrix::avg(data);
 			std = Matrix::std(data);
-			X = Matrix::normalize(data);
+			neurons.push_back(Matrix::normalize(data));
 			isNormalized = true;
 		}
 		else{
-			X = data;
+			neurons.push_back(data);
 			isNormalized = false;
 		}
 
-		_d.prependColumn(X,Vector::ones(m));
-		X_t = Matrix::transpose(X);
-
 		Y = label;
 
+
+		//Initialize everything to random values
 		int curr = input_layer_size;
 		for(int l=0;l<hidden_layer_count;l++){
-			theta.push_back(Matrix::random(hidden_units[l], curr));
-			curr = 1+hidden_units[l];
+			theta.push_back(Matrix::random(curr, hidden_units[l], true));
+			theta_bias.push_back(Vector::random(hidden_units[l], true));
+			curr = hidden_units[l];
 		}
-		theta.push_back(Matrix::random(output_layer_size, curr));
+		theta_bias.push_back(Vector::random(output_layer_size, true));
+		theta.push_back(Matrix::random(curr, output_layer_size, true));
 
 
 		vector <vector<double> > v;
-		neurons.push_back(X);
 		for(int i=1;i<=hidden_layer_count;i++){
-			v = Matrix::sigmoid(Matrix::multiply(neurons[i-1], Matrix::transpose(theta[i-1])));
-			_d.prependColumn(v,Vector::ones(m));
+			v = Matrix::sigmoid(Matrix::multiply(neurons[i-1], theta[i-1]));
 			neurons.push_back(v);
 		}
-		v = Matrix::sigmoid(Matrix::multiply(neurons[output_layer-1], Matrix::transpose(theta[output_layer-1])));
+		v = Matrix::sigmoid(Matrix::multiply(neurons[output_layer-1], theta[output_layer-1]));
 		neurons.push_back(v);
 	}
-	double trainByGradientDescent(double alpha,  bool gradientCheck, bool printCost = false){
+	double trainByGradientDescent(double alpha,  int loop, bool printCost = false){
 		if(!isNormalized){
 			printf("Gradient Descent without Normalization may take a long time to complete. Try to normalize the features for faster descent.\n");
 		}
@@ -180,61 +157,17 @@ public:
 		for(int i=0;i<theta.size();i++){
 			for(int j=0;j<theta[i].size();j++){
 				for(int k=0;k<theta[i][j].size();k++){
-					theta[i][j][k] = randDouble()/10000;
+					theta[i][j][k] = randDouble(true);
 				}
 			}
 		}
 		double prev_cost = 1000000*m, curr_cost;
-		while(true){
+		while(loop--){
 
 			forwardPropagate();
-
-			vector <vector<vector<double> > > Delta  = theta;
-			for(int i=0;i<Delta.size();i++){
-				for(int j=0;j<Delta[i].size();j++){
-					for(int k=0;k<Delta[i][j].size();k++){
-						Delta[i][j][k] = 0;
-					}
-				}
-			}
-
-			backPropagate(Delta);
-
-			for(int i=0;i<Delta.size();i++){
-				for(int j=0;j<Delta[i].size();j++){
-					for(int k=0;k<Delta[i][j].size();k++){
-						if(gradientCheck){
-							double orig = theta[i][j][k];
-							theta[i][j][k] += 0.0001;
-							forwardPropagate();
-							double c1 = cost();
-							theta[i][j][k] -= 0.0002;
-							forwardPropagate();
-							double c2 = cost();
-							if(k==0)
-								printf("Gradient Checking - %lf %lf\n",(c1-c2)/0.0002,(1.0/m)*Delta[i][j][k]);
-							else
-								printf("Gradient Checking - %lf %lf\n",(c1-c2)/0.0002,(1.0/m)*(Delta[i][j][k] + lambda*orig));
-							//Restore
-							theta[i][j][k] += 0.0001;
-							forwardPropagate();
-						}
-						if(k==0)
-							theta[i][j][k] = theta[i][j][k] - (alpha/m)*Delta[i][j][k];
-						else
-							theta[i][j][k] = theta[i][j][k] - (alpha/m)*(Delta[i][j][k] + lambda*theta[i][j][k]);
-							
-					}
-				}
-			}
+			backPropagate(alpha);
 
 			curr_cost = cost();
-			if(curr_cost-prev_cost>0 || fabs(curr_cost-prev_cost)<0.000001){
-				if(curr_cost-prev_cost > 0.000001){
-					printf("A overshoot was observed during learning. Try to decrease the learning rate or increase the layers.\n");
-				}
-				break;
-			}
 			if(printCost)
 				printf("Cost: %lf Difference: %lf\n",curr_cost,prev_cost-curr_cost);
 			prev_cost = curr_cost;
@@ -253,21 +186,15 @@ public:
 				}
 			}
 		}
-		_d.prependColumn(X_p,Vector::ones(X_p.size()));
-		for(int i=0;i<theta.size();i++){
-			printf("Layer %d\n",i);
-			for(int j=0;j<theta[i].size();j++){
-				for(int k=0;k<theta[i][j].size();k++){
-					printf("%d %d %lf\n",k,j,theta[i][j][k]);
+		for(int l=1;l<=output_layer;l++){
+			X_p = Matrix::multiply(X_p, theta[l-1]);
+			for(int i=0;i<neurons[l][0].size();i++){
+				for(int j=0;j<X_p.size();j++){
+					X_p[j][i] += theta_bias[l-1][i];
 				}
 			}
+			X_p = Matrix::sigmoid(X_p);
 		}
-		//Forward propagate X_p
-		for(int i=1;i<=hidden_layer_count;i++){
-			X_p = Matrix::sigmoid(Matrix::multiply(X_p, Matrix::transpose(theta[i-1])));
-			_d.prependColumn(X_p,Vector::ones(X_p.size()));
-		}
-		X_p = Matrix::sigmoid(Matrix::multiply(X_p, Matrix::transpose(theta[output_layer-1])));
 		return X_p;
 	}
 };
