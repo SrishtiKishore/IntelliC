@@ -15,6 +15,8 @@
 class Cluster{
 private:
 	vector <vector <double> > X;
+	vector <double> std;
+	vector <double> avg;
 	DataTransform <double> _d;
 	int m;
 	int n;
@@ -25,8 +27,10 @@ public:
 		m = data.size();
 		n = data[0].size();
 		X = Matrix::normalize(data);
+		std = Matrix::std(data);
+		avg = Matrix::avg(data);
 	}
-	void cluster(int k, vector <vector<double> > &ret_centroids, vector <int> &ret_assigned_centroid, double &cost, bool printCost = false){
+	void cluster(int k, vector <vector<double> > &ret_centroids, vector <int> &ret_assigned_centroid, bool printCost = false){
 		if(k>m){
 			throw "Number of clusters must be less than number of rows in the dataset.\n";
 		}
@@ -93,8 +97,13 @@ public:
 			if(printCost)
 				printf("Cost - %lf\n",c);
 		}
+		//Denormalize
+		for(int i=0;i<k;i++){
+			for(int j=0;j<n;j++){
+				centroids[i][j] = (centroids[i][j]*std[j])+avg[j];
+			}
+		}
 		ret_centroids = centroids;
 		ret_assigned_centroid = assigned_centroid;
-		cost = c;
 	}
 };
