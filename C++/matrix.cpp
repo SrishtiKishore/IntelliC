@@ -1,29 +1,8 @@
-
-#ifndef _VECTOR_
-	#include <vector>
-	#define _VECTOR_
-#endif
-
-#ifndef _TIME_H_
-	#include <time.h>
-	#define _TIME_H_
-#endif
-
-#ifndef _LIMITS_
-	#include <limits>
-	#define _LIMITS_
-#endif
-
-#ifndef _MATH_H_
-	#include <math.h>
-	#define _MATH_H_
-#endif
-
-
-#ifndef _STDLIB_H_
-	#include <stdlib.h>
-	#define _STDLIB_H_
-#endif
+#include <vector>
+#include <time.h>
+#include <limits>
+#include <math.h>
+#include <stdlib.h>
 
 #ifndef _MATRIX_CPP_
 
